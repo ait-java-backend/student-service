@@ -1,4 +1,88 @@
 package ait.cohort60.student.service;
 
-public class StudentServiceImpl {
+import ait.cohort60.student.dao.StudentRepository;
+import ait.cohort60.student.dto.ScoreDto;
+import ait.cohort60.student.dto.StudentCredentialsDto;
+import ait.cohort60.student.dto.StudentDto;
+import ait.cohort60.student.dto.StudentUpdateDto;
+import ait.cohort60.student.dto.exeptions.NotFoundException;
+import ait.cohort60.student.model.Student;
+import jdk.jfr.Category;
+import lombok.extern.apachecommons.CommonsLog;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Set;
+
+@Component
+public class StudentServiceImpl implements StudentService {
+    @Autowired
+    private StudentRepository studentRepository;
+
+    @Override
+    public Boolean addStudent(StudentCredentialsDto studentCredentialsDto) {
+        if (studentRepository.findById(studentCredentialsDto.getId()).isPresent()) {
+            return false;
+        }
+        Student student = new Student(studentCredentialsDto.getId(), studentCredentialsDto.getName(), studentCredentialsDto.getPassword());
+        studentRepository.save(student);
+        return true;
+    }
+
+    @Override
+    public StudentDto findStudent(Long id) {
+        Student student = studentRepository.findById(id).orElseThrow(NotFoundException::new);
+        return new StudentDto(student.getId(), student.getName(), student.getScores());
+    }
+
+    @Override
+    public StudentDto removeStudent(Long id) {
+        Student student = studentRepository.findById(id).orElseThrow(NotFoundException::new);
+        studentRepository.deleteById(id);
+        return new StudentDto(student.getId(), student.getName(), student.getScores());
+    }
+
+    @Override
+    public StudentCredentialsDto updateStudent(Long id, StudentUpdateDto studentUpdateDto) {
+        Student student = studentRepository.findById(id).orElseThrow(NotFoundException::new);
+        if (studentUpdateDto.getName() != null) {
+            student.setName(studentUpdateDto.getName());
+        }
+        if (studentUpdateDto.getPassword() != null) {
+            student.setPassword(studentUpdateDto.getPassword());
+        }
+        studentRepository.save(student);
+        return new StudentCredentialsDto(student.getId(), student.getName(), student.getPassword());
+    }
+
+    @Override
+    public Boolean addScore(Long id, ScoreDto scoreDto) {
+        Student student = studentRepository.findById(id).orElseThrow(NotFoundException::new);
+        return student.addScore(scoreDto.getExamName(), scoreDto.getScore());
+    }
+
+    @Override
+    public List<StudentDto> findStudentsByName(String name) {
+        return studentRepository.findAll().stream()
+                .filter(s -> s.getName().equalsIgnoreCase(name))
+                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+                .toList();
+    }
+
+    @Override
+    public Long countStudentsByNames(Set<String> names) {
+        return studentRepository.findAll().stream()
+                .filter(s -> names.contains(s.getName()))
+                .count();
+    }
+
+    @Override
+    public List<StudentDto> findStudentsByExamNameMinScore(String examName, Integer minScore) {
+        return studentRepository.findAll().stream()
+                .filter(s -> s.getScores().containsKey(examName))
+                .filter(s -> s.getScores().get(examName) >= minScore )
+                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+                .toList();
+    }
 }
