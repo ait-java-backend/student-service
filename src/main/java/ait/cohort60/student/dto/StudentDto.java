@@ -12,5 +12,5 @@ import java.util.Map;
 public class StudentDto {
     private Long id;
     private String name;
-    private Map<String, Integer> score;
+    private Map<String, Integer> scores;
 }
