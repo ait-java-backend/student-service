@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.apachecommons.CommonsLog;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,7 @@ import java.util.Set;
 public class StudentServiceImpl implements StudentService {
     private final StudentRepository studentRepository;
     private final ModelMapper modelMapper;
+    private final MongoTemplate mongoTemplate;
 
     @Override
     public Boolean addStudent(StudentCredentialsDto studentCredentialsDto) {
@@ -83,7 +87,11 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public List<StudentDto> findStudentsByExamNameMinScore(String examName, Integer minScore) {
-        return studentRepository.findByExamAndScoresGreaterThan(examName, minScore)
+        Query query = new Query();
+        query.addCriteria(Criteria.where("scores." + examName).gte(minScore));
+
+        List<Student> students = mongoTemplate.find(query, Student.class);
+        return students.stream()
                 .map(s -> modelMapper.map(s, StudentDto.class))
                 .toList();
     }
