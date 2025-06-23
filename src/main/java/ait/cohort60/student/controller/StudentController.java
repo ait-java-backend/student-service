@@ -5,6 +5,7 @@ import ait.cohort60.student.dto.StudentCredentialsDto;
 import ait.cohort60.student.dto.StudentDto;
 import ait.cohort60.student.dto.StudentUpdateDto;
 import ait.cohort60.student.service.StudentService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,9 +13,9 @@ import java.util.List;
 import java.util.Set;
 
 @RestController
+@RequiredArgsConstructor
 public class StudentController {
-    @Autowired
-    private StudentService studentService;
+    private final StudentService studentService;
 
     @PostMapping("/student")
     public Boolean addStudent(@RequestBody StudentCredentialsDto studentCredentialsDto) {
