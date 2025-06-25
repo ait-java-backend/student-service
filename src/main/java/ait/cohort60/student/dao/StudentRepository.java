@@ -12,7 +12,8 @@ import java.util.stream.Stream;
 public interface StudentRepository extends MongoRepository<Student, Long> {
         Stream<Student> findByNameIgnoreCase(String name);
 
-//        @Query("{'scores.Math': {'$gt': 90}}")
-//        Stream<Student> findByExamAndScoresGreaterThan(String examName, Integer score);
-        long countByNameInIgnoreCase(Set<String> names);
+        @Query("{'scores.?0': {'$gt': ?1}}")
+        Stream<Student> findByExamAndScoreGreaterThan(String examName, Integer score);
+
+        Long countByNameInIgnoreCase(Set<String> names);
 }

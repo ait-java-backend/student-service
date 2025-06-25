@@ -7,15 +7,8 @@ import ait.cohort60.student.dto.StudentDto;
 import ait.cohort60.student.dto.StudentUpdateDto;
 import ait.cohort60.student.dto.exeptions.NotFoundException;
 import ait.cohort60.student.model.Student;
-import jdk.jfr.Category;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.apachecommons.CommonsLog;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,14 +19,13 @@ import java.util.Set;
 public class StudentServiceImpl implements StudentService {
     private final StudentRepository studentRepository;
     private final ModelMapper modelMapper;
-    private final MongoTemplate mongoTemplate;
+
 
     @Override
     public Boolean addStudent(StudentCredentialsDto studentCredentialsDto) {
-        if (studentRepository.findById(studentCredentialsDto.getId()).isPresent()) {
+        if (studentRepository.existsById(studentCredentialsDto.getId())) {
             return false;
         }
-//        Student student = new Student(studentCredentialsDto.getId(), studentCredentialsDto.getName(), studentCredentialsDto.getPassword());
         Student student = modelMapper.map(studentCredentialsDto, Student.class);
         studentRepository.save(student);
         return true;
@@ -87,12 +79,8 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public List<StudentDto> findStudentsByExamNameMinScore(String examName, Integer minScore) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("scores." + examName).gte(minScore));
-
-        List<Student> students = mongoTemplate.find(query, Student.class);
-        return students.stream()
-                .map(s -> modelMapper.map(s, StudentDto.class))
+        return studentRepository.findByExamAndScoreGreaterThan(examName, minScore)
+                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
                 .toList();
     }
 }
